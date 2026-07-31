@@ -8,10 +8,10 @@ import esphome.components.text_sensor as text_sensor
 CODEOWNERS = ["@Lioness-Jade"]
 DEPENDENCIES = ["wifi"]
 
-nat_ap_ns = cg.esphome_ns.namespace("nat_ap")
-NatAp = nat_ap_ns.class_("NatAp", cg.Component)
+nat_router_ns = cg.esphome_ns.namespace("nat_router")
+NatRouter = nat_router_ns.class_("NatRouter", cg.Component)
 
-PortForwardingProtocolEnum = nat_ap_ns.enum("PortForwardingProtocol")
+PortForwardingProtocolEnum = nat_router_ns.enum("PortForwardingProtocol")
 
 PORT_FORWARDING_PROTOCOL_SCHEMA = cv.enum(
     {
@@ -66,7 +66,7 @@ TEXT_SENSOR_SCHEMA = cv.Schema(
 
 CONFIG_SCHEMA = cv.Schema(
     {
-        cv.GenerateID(): cv.declare_id(NatAp),
+        cv.GenerateID(): cv.declare_id(NatRouter),
         cv.Optional("ap_ssid", default="ESPHomeAP"): cv.string,
         cv.Optional("ap_password", default="ESPHomeAPPass"): cv.All(
             cv.string, cv.Length(min=8)
@@ -130,10 +130,14 @@ async def to_code(config):
     if "text_sensors" in config:
         text_sensors_config = config["text_sensors"]
         if "client_mac_list" in text_sensors_config:
-            sens = await text_sensor.new_text_sensor(text_sensors_config["client_mac_list"])
+            sens = await text_sensor.new_text_sensor(
+                text_sensors_config["client_mac_list"]
+            )
             cg.add(var.set_client_mac_list_sensor(sens))
         if "online_status" in text_sensors_config:
-            sens = await text_sensor.new_text_sensor(text_sensors_config["online_status"])
+            sens = await text_sensor.new_text_sensor(
+                text_sensors_config["online_status"]
+            )
             cg.add(var.set_online_status_sensor(sens))
 
     await cg.register_component(var, config)
