@@ -233,10 +233,10 @@ nat_ap:
 
 | Feature | NAT Mode (Default) | Bridge Mode |
 |------|----------------|----------|
-| IP Forwarding | TCP/UDP only | ✅ All protocols (ICMP, TCP, UDP, etc.) |
-| Network Transparency | Requires address translation | ✅ Fully transparent |
-| Ping Test | May be limited | ✅ Fully supported |
-| Use Case | General internet access | ✅ Scenarios requiring full network functionality |
+| IP Forwarding | TCP/UDP only | All protocols (ICMP, TCP, UDP, etc.) |
+| Network Transparency | Requires address translation | Fully transparent |
+| Ping Test | May be limited | Fully supported |
+| Use Case | General internet access | Scenarios requiring full network functionality |
 
 ### How It Works
 
