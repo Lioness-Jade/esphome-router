@@ -12,9 +12,6 @@
 #include "lwip/tcpip.h"
 #include "lwip/stats.h"
 #include "lwip/ip4.h"
-#if CONFIG_LWIP_IP_FORWARD
-#include "lwip/ip4_frag.h"
-#endif
 #include <esp_netif.h>
 #include <esp_err.h>
 #include "mdns.h"
@@ -206,8 +203,7 @@ void NatAp::enable_napt() {
 void NatAp::enable_bridge_mode() {
     ESP_LOGI(TAG, "启用桥接模式 - 全协议 IP 转发（ICMP/TCP/UDP）");
 #if CONFIG_LWIP_IP_FORWARD
-    ip_forward_enable(1);
-    ESP_LOGI(TAG, "ip_forward_enable(1) 已调用，ICMP/UDP/TCP 全部转发已激活");
+    ESP_LOGI(TAG, "CONFIG_LWIP_IP_FORWARD=1 已编译启用，ICMP/UDP/TCP 全部转发已激活");
 #else
     ESP_LOGW(TAG, "CONFIG_LWIP_IP_FORWARD 未启用，桥接模式退化为仅 NAPT（TCP/UDP）");
 #endif
