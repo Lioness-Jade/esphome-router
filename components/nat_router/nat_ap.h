@@ -1,5 +1,5 @@
-#ifndef NAT_ROUTER_H
-#define NAT_ROUTER_H
+#ifndef NAT_AP_H
+#define NAT_AP_H
 
 #include "esphome/core/component.h"
 #include "esphome/core/log.h"
@@ -25,13 +25,15 @@
 #include "lwip/opt.h"
 #include "lwip/stats.h"
 
+#include "mdns.h"
+
 #include "dhcpserver/dhcpserver.h"
 
-static const char *TAG = "NatRouter";
+static const char *TAG = "NatAp";
 #define EXAMPLE_MAX_STA_CONN 10
 
 namespace esphome {
-namespace nat_router {
+namespace nat_ap {
 
 enum PortForwardingProtocol {
     PROTOCOL_TCP,
@@ -53,9 +55,22 @@ struct ConnectedDevice {
     int8_t rssi;
 };
 
-class NatRouter : public Component {
+struct MdnsProxyTxt {
+    std::string key;
+    std::string value;
+};
+
+struct MdnsProxyTarget {
+    std::string mac;
+    std::string hostname;
+    uint16_t port;
+    std::vector<MdnsProxyTxt> txt_items;
+    bool active = false;
+};
+
+class NatAp : public Component {
 public:
-    NatRouter();
+    NatAp();
 
     void set_ap_ssid(const std::string& ssid) { ap_ssid_ = ssid; }
     void set_ap_password(const std::string& password) { ap_password_ = password; }
@@ -77,6 +92,23 @@ public:
     void add_port_forwarding_rule(PortForwardingProtocol protocol, uint16_t external_port,
                                   const std::string& internal_ip_str, uint16_t internal_port);
 
+    void add_mdns_proxy_target(const std::string& mac, const std::string& hostname, uint16_t port) {
+        MdnsProxyTarget target;
+        target.mac = mac;
+        target.hostname = hostname;
+        target.port = port;
+        mdns_proxy_targets_.push_back(target);
+    }
+
+    void add_mdns_proxy_txt(const std::string& mac, const std::string& key, const std::string& value) {
+        for (auto& target : mdns_proxy_targets_) {
+            if (target.mac == mac) {
+                target.txt_items.push_back({key, value});
+                break;
+            }
+        }
+    }
+
     void setup() override;
     void loop() override;
     float get_setup_priority() const override { return esphome::setup_priority::AFTER_WIFI; }
@@ -95,7 +127,7 @@ protected:
     esp_event_handler_instance_t instance_sta_disconnected;
     esp_event_handler_instance_t instance_got_ip;
 
-    static NatRouter* global_nat_router_instance;
+    static NatAp* global_nat_ap_instance;
 
     std::vector<PortForwardingRule> forwarding_rules_;
     bool napt_enabled_ = false;
@@ -120,6 +152,8 @@ protected:
 
     uint32_t last_sensor_update_ = 0;
 
+    std::vector<MdnsProxyTarget> mdns_proxy_targets_;
+
     sensor::Sensor *upload_speed_sensor_ = nullptr;
     sensor::Sensor *download_speed_sensor_ = nullptr;
     sensor::Sensor *connected_devices_sensor_ = nullptr;
@@ -139,18 +173,21 @@ protected:
                                      int32_t event_id, void* event_data);
 
     void enable_napt();
-    void enable_bridge_mode();
     void apply_port_forwarding_rules();
     void configure_ap_interface();
-
     void update_connected_devices();
     void update_network_stats();
     void update_sta_connection_info();
     void check_gateway_health();
     void publish_sensors();
+    void enable_bridge_mode();
+
+    void register_mdns_proxy(const std::string& mac);
+    void unregister_mdns_proxy(const std::string& mac);
+    void re_register_all_mdns_proxies();
 };
 
-} // namespace nat_router
+} // namespace nat_ap
 } // namespace esphome
 
-#endif // NAT_ROUTER_H
+#endif // NAT_AP_H
