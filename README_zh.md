@@ -82,7 +82,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/Lioness-Jade/esphome-router
-    components: nat_ap
+    components: nat-router
     refresh: always
 ```
 
@@ -93,7 +93,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/Lioness-Jade/esphome-router
-    components: nat_ap
+    components: nat-router
     refresh: always
 
 esphome:
@@ -122,7 +122,7 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
-nat_ap:
+nat-router:
   ap_ssid: "ESPHomeNATAP"            # AP 的 SSID 名称
   ap_password: "ESPHomeNATAP"        # AP 的密码
   ap_ip_address: "192.168.10.1"      # AP 向客户端提供的 IP
@@ -219,10 +219,10 @@ wifi:
 
 ### 启用桥接模式
 
-在 `nat_ap` 配置中添加或设置 `bridge_mode: true`：
+在 `nat-router` 配置中添加或设置 `bridge_mode: true`：
 
 ```yaml
-nat_ap:
+nat-router:
   ap_ssid: "ESPHomeNATAP"
   ap_password: "ESPHomeNATAP"
   ap_ip_address: "192.168.10.1"
@@ -271,7 +271,7 @@ nat_ap:
 ### 示例配置（完整版）
 
 ```yaml
-nat_ap:
+nat-router:
   ap_ssid: "ESPHomeNATAP"
   ap_password: "ESPHomeNATAP"
   ap_ip_address: "192.168.10.1"
