@@ -82,7 +82,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/Lioness-Jade/esphome-router
-    components: nat_ap
+    components: nat_router
     refresh: always
 ```
 
@@ -93,7 +93,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/Lioness-Jade/esphome-router
-    components: nat_ap
+    components: nat_router
     refresh: always
 
 esphome:
@@ -122,7 +122,7 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
-nat_ap:
+nat_router:
   ap_ssid: "ESPHomeNATAP"            # AP SSID name
   ap_password: "ESPHomeNATAP"        # AP password
   ap_ip_address: "192.168.10.1"      # IP provided by AP to clients
@@ -219,10 +219,10 @@ When Bridge Mode is enabled, the ESP32 operates as a transparent network bridge,
 
 ### Enabling Bridge Mode
 
-Add or set `bridge_mode: true` in the `nat_ap` configuration:
+Add or set `bridge_mode: true` in the `nat_router` configuration:
 
 ```yaml
-nat_ap:
+nat_router:
   ap_ssid: "ESPHomeNATAP"
   ap_password: "ESPHomeNATAP"
   ap_ip_address: "192.168.10.1"
@@ -271,7 +271,7 @@ After enabling bridge mode, you can:
 ### Example Configuration (Complete)
 
 ```yaml
-nat_ap:
+nat_router:
   ap_ssid: "ESPHomeNATAP"
   ap_password: "ESPHomeNATAP"
   ap_ip_address: "192.168.10.1"
