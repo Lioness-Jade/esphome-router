@@ -8,10 +8,10 @@ import esphome.components.text_sensor as text_sensor
 CODEOWNERS = ["@Lioness-Jade"]
 DEPENDENCIES = ["wifi"]
 
-nat_router_ns = cg.esphome_ns.namespace("nat_router")
-NatRouter = nat_router_ns.class_("NatRouter", cg.Component)
+nat_ap_ns = cg.esphome_ns.namespace("nat_ap")
+NatAp = nat_ap_ns.class_("NatAp", cg.Component)
 
-PortForwardingProtocolEnum = nat_router_ns.enum("PortForwardingProtocol")
+PortForwardingProtocolEnum = nat_ap_ns.enum("PortForwardingProtocol")
 
 PORT_FORWARDING_PROTOCOL_SCHEMA = cv.enum(
     {
@@ -64,9 +64,25 @@ TEXT_SENSOR_SCHEMA = cv.Schema(
     }
 )
 
+MDNS_PROXY_TXT_SCHEMA = cv.Schema(
+    {
+        cv.Required("key"): cv.string,
+        cv.Required("value"): cv.string,
+    }
+)
+
+MDNS_PROXY_SCHEMA = cv.Schema(
+    {
+        cv.Required("mac"): cv.string,
+        cv.Required("hostname"): cv.string,
+        cv.Required("port"): cv.port,
+        cv.Optional("txt", default=[]): cv.ensure_list(MDNS_PROXY_TXT_SCHEMA),
+    }
+)
+
 CONFIG_SCHEMA = cv.Schema(
     {
-        cv.GenerateID(): cv.declare_id(NatRouter),
+        cv.GenerateID(): cv.declare_id(NatAp),
         cv.Optional("ap_ssid", default="ESPHomeAP"): cv.string,
         cv.Optional("ap_password", default="ESPHomeAPPass"): cv.All(
             cv.string, cv.Length(min=8)
@@ -79,6 +95,9 @@ CONFIG_SCHEMA = cv.Schema(
         ),
         cv.Optional("sensors"): SENSOR_SCHEMA,
         cv.Optional("text_sensors"): TEXT_SENSOR_SCHEMA,
+        cv.Optional("mdns_proxy"): cv.All(
+            cv.ensure_list(MDNS_PROXY_SCHEMA), cv.Length(min=0)
+        ),
     }
 ).extend(cv.COMPONENT_SCHEMA)
 
@@ -140,6 +159,25 @@ async def to_code(config):
             )
             cg.add(var.set_online_status_sensor(sens))
 
+    if "mdns_proxy" in config:
+        for proxy in config["mdns_proxy"]:
+            mac_str = str(proxy["mac"]).upper()
+            cg.add(
+                var.add_mdns_proxy_target(
+                    mac_str,
+                    proxy["hostname"],
+                    proxy["port"],
+                )
+            )
+            for txt_item in proxy.get("txt", []):
+                cg.add(
+                    var.add_mdns_proxy_txt(
+                        mac_str,
+                        txt_item["key"],
+                        txt_item["value"],
+                    )
+                )
+
     await cg.register_component(var, config)
 
     cg.add_build_flag("-DIP_NAPT=1")
@@ -157,6 +195,7 @@ async def to_code(config):
     add_idf_sdkconfig_option("CONFIG_ESP_WIFI_SOFTAP_SUPPORT", True)
     add_idf_sdkconfig_option("CONFIG_LWIP_L2_TO_L3_COPY", True)
     add_idf_sdkconfig_option("CONFIG_LWIP_STATS", True)
+    add_idf_sdkconfig_option("CONFIG_MDNS_MULTIPLE_INSTANCE", True)
     add_idf_sdkconfig_option("CONFIG_LWIP_MEMP_NUM_NETCONN", "12")
     add_idf_sdkconfig_option("CONFIG_LWIP_MEMP_NUM_TCP_PCB", "12")
     add_idf_sdkconfig_option("CONFIG_LWIP_TCP_SND_BUF", "8192")
