@@ -291,9 +291,11 @@ void NatAp::configure_ap_interface() {
     if (esp_netif_sta &&
         esp_netif_get_dns_info(esp_netif_sta, ESP_NETIF_DNS_MAIN, &dns_info) == ESP_OK) {
         uint32_t raw_dns_ip = dns_info.ip.u_addr.ip4.addr;
-        ESP_LOGI(TAG, "从 STA 获取 DNS：%u.%u.%u.%u",
-                 raw_dns_ip & 0xFF, (raw_dns_ip >> 8) & 0xFF,
-                 (raw_dns_ip >> 16) & 0xFF, (raw_dns_ip >> 24) & 0xFF);
+        ESP_LOGI(TAG, "从 STA 获取 DNS：%lu.%lu.%lu.%lu",
+                 (unsigned long)(raw_dns_ip & 0xFF),
+                 (unsigned long)((raw_dns_ip >> 8) & 0xFF),
+                 (unsigned long)((raw_dns_ip >> 16) & 0xFF),
+                 (unsigned long)((raw_dns_ip >> 24) & 0xFF));
 
         dhcps_offer_t dhcps_dns_value = OFFER_DNS;
         err = esp_netif_dhcps_option(esp_netif_ap,
@@ -308,9 +310,11 @@ void NatAp::configure_ap_interface() {
         err = esp_netif_set_dns_info(esp_netif_ap, ESP_NETIF_DNS_MAIN, &dns_info);
         if (err == ESP_OK) {
             uint32_t raw_dns_ip2 = dns_info.ip.u_addr.ip4.addr;
-            ESP_LOGI(TAG, "AP DHCP 将提供 DNS：%u.%u.%u.%u",
-                     raw_dns_ip2 & 0xFF, (raw_dns_ip2 >> 8) & 0xFF,
-                     (raw_dns_ip2 >> 16) & 0xFF, (raw_dns_ip2 >> 24) & 0xFF);
+            ESP_LOGI(TAG, "AP DHCP 将提供 DNS：%lu.%lu.%lu.%lu",
+                     (unsigned long)(raw_dns_ip2 & 0xFF),
+                     (unsigned long)((raw_dns_ip2 >> 8) & 0xFF),
+                     (unsigned long)((raw_dns_ip2 >> 16) & 0xFF),
+                     (unsigned long)((raw_dns_ip2 >> 24) & 0xFF));
         } else {
             ESP_LOGW(TAG, "esp_netif_set_dns_info() 失败：%s", esp_err_to_name(err));
         }
@@ -454,10 +458,9 @@ void NatAp::register_mdns_proxy(const std::string& mac) {
         if (target.mac != mac || target.active) continue;
 
         esp_err_t err = mdns_delegate_hostname_add(target.hostname.c_str(), nullptr);
-        if (err != ESP_OK && err != ESP_ERR_MDNS_ALREADY_EXISTS) {
-            ESP_LOGE(TAG, "mDNS 委托主机名添加失败 %s: %s",
-                     target.hostname.c_str(), esp_err_to_name(err));
-            continue;
+        if (err != ESP_OK) {
+            ESP_LOGW(TAG, "mDNS 委托主机名添加返回 %s（可能已存在，继续注册服务）: %s",
+                     esp_err_to_name(err), target.hostname.c_str());
         }
 
         std::vector<mdns_txt_item_t> txt_items;
@@ -469,6 +472,7 @@ void NatAp::register_mdns_proxy(const std::string& mac) {
             target.hostname.c_str(),
             "_esphomelib",
             "_tcp",
+            target.hostname.c_str(),
             target.port,
             txt_items.data(),
             txt_items.size()
