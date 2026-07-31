@@ -22,7 +22,7 @@ This custom external component for ESPHome allows your ESP32 to create its own l
 
 * **Network Address Translation (NAT):** Devices on the AP network can access the internet through the ESP32's STA connection.
 
-* **Full Bridge Mode:** ✅ **Implemented** - When enabled, calls `ip_forward_enable(1)` to ensure complete IP packet forwarding, identical to a router relay function, supporting all protocols including ICMP, TCP, UDP, etc.
+* **Full Bridge Mode:** **Implemented** - When enabled, calls `ip_forward_enable(1)` to ensure complete IP packet forwarding, identical to a router relay function, supporting all protocols including ICMP, TCP, UDP, etc.
 
 * **Port Forwarding:** Configure rules to redirect incoming traffic from the main network to specific devices on the AP internal network.
 
@@ -236,7 +236,7 @@ nat_ap:
 | IP Forwarding | TCP/UDP only | ✅ All protocols (ICMP, TCP, UDP, etc.) |
 | Network Transparency | Requires address translation | ✅ Fully transparent |
 | Ping Test | May be limited | ✅ Fully supported |
-| Use Case | General internet access | Scenarios requiring full network functionality |
+| Use Case | General internet access | ✅ Scenarios requiring full network functionality |
 
 ### How It Works
 
