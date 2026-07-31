@@ -1,0 +1,86 @@
+esphome:
+  name: esp32-c3-nat
+  friendly_name: esp32-c3-nat
+
+esp32:
+  board: esp32-c3-devkitm-1
+  cpu_frequency: 160MHZ
+  framework:
+    type: esp-idf
+
+logger:
+  level: DEBUG
+
+api:
+  encryption:
+    key: ""
+  
+ota:
+  - platform: esphome
+    password: ""
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+# --- 在此处配置您的 NAT AP 组件！---
+nat_ap:
+  ap_ssid: "MiAP_ESPHome"
+  ap_password: "MiContrasenaSegura"
+  ap_ip_address: "192.168.20.1" # 例如，新的子网
+  hide_ssid: false
+  bridge_mode: true  # 启用桥接模式，确保完整的 IP 数据包转发（类似路由器中继）
+  
+  # HomeAssistant 数值传感器配置 - 实时监控网速和连接设备
+  sensors:
+    upload_speed:
+      name: "NAT AP 上传速度"
+      unit_of_measurement: "Mbps"
+      accuracy_decimals: 3
+    download_speed:
+      name: "NAT AP 下载速度"
+      unit_of_measurement: "Mbps"
+      accuracy_decimals: 3
+    connected_devices:
+      name: "NAT AP 连接设备数"
+      accuracy_decimals: 0
+    gateway_health:
+      name: "NAT AP 网关健康状态"
+      accuracy_decimals: 0  # 1=在线，0=离线
+    forward_throughput:
+      name: "NAT AP 转发吞吐量"
+      unit_of_measurement: "包/秒"
+      accuracy_decimals: 0
+    sta_link_rate:
+      name: "NAT AP STA 链路速率"
+      unit_of_measurement: "Mbps"
+      accuracy_decimals: 0
+    sta_channel:
+      name: "NAT AP STA 信道"
+      accuracy_decimals: 0
+  
+  # HomeAssistant 文本传感器配置
+  text_sensors:
+    client_mac_list:
+      name: "NAT AP 客户端 MAC 列表"
+    online_status:
+      name: "NAT AP 在线状态"
+
+  port_forwarding:
+    # 重定向外部 TCP 端口 8080 到内部 IP 192.168.20.10，端口 80
+    - protocol: TCP
+      external_port: 8080
+      internal_ip: "192.168.20.10"
+      internal_port: 80
+    
+    # 重定向外部 UDP 端口 12345 到内部 IP 192.168.20.20，端口 54321
+    - protocol: UDP
+      external_port: 12345
+      internal_ip: "192.168.20.20"
+      internal_port: 54321
+
+    # 同时重定向 TCP 和 UDP 从外部端口 5000 到内部 IP 192.168.20.30，端口 5000
+    - protocol: TCP_UDP
+      external_port: 5000
+      internal_ip: "192.168.20.30"
+      internal_port: 5000
