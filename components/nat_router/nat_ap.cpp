@@ -11,7 +11,6 @@
 #include "lwip/lwip_napt.h"
 #include "lwip/tcpip.h"
 #include "lwip/stats.h"
-#include "lwip/ip4.h"
 #include <esp_netif.h>
 #include <esp_err.h>
 #include "mdns.h"
@@ -203,9 +202,10 @@ void NatAp::enable_napt() {
 void NatAp::enable_bridge_mode() {
     ESP_LOGI(TAG, "启用桥接模式 - 全协议 IP 转发（ICMP/TCP/UDP）");
 #if CONFIG_LWIP_IP_FORWARD
-    ESP_LOGI(TAG, "CONFIG_LWIP_IP_FORWARD=1 已编译启用，ICMP/UDP/TCP 全部转发已激活");
+    ip_forward_enable(1);
+    ESP_LOGI(TAG, "ip_forward_enable(1) 已调用");
 #else
-    ESP_LOGW(TAG, "CONFIG_LWIP_IP_FORWARD 未启用，桥接模式退化为仅 NAPT（TCP/UDP）");
+    ESP_LOGW(TAG, "CONFIG_LWIP_IP_FORWARD 未启用，桥接退化为仅 NAPT(TCP/UDP)");
 #endif
 }
 
@@ -462,7 +462,6 @@ void NatAp::register_mdns_proxy(const std::string& mac) {
     for (auto& target : mdns_proxy_targets_) {
         if (target.mac != mac || target.active) continue;
 
-        // 获取当前 STA IP，作为委托主机名的 A 记录
         esp_netif_ip_info_t sta_ip_info;
         if (esp_netif_get_ip_info(esp_netif_sta, &sta_ip_info) != ESP_OK ||
             sta_ip_info.ip.addr == 0) {
@@ -470,16 +469,15 @@ void NatAp::register_mdns_proxy(const std::string& mac) {
             continue;
         }
 
-        // 构造 IP 地址（mdns_delegate_hostname_add 内部会拷贝）
-        mdns_ip_addr_t addr_item;
-        memset(&addr_item, 0, sizeof(addr_item));
-        addr_item.addr.type = ESP_IPADDR_TYPE_V4;
-        addr_item.addr.u_addr.ip4.addr = sta_ip_info.ip.addr;
-        addr_item.next = nullptr;
+        mdns_ip_addr_t addr;
+        memset(&addr, 0, sizeof(addr));
+        addr.addr.type = ESP_IPADDR_TYPE_V4;
+        addr.addr.u_addr.ip4.addr = sta_ip_info.ip.addr;
+        addr.next = nullptr;
 
-        esp_err_t err = mdns_delegate_hostname_add(target.hostname.c_str(), &addr_item);
+        esp_err_t err = mdns_delegate_hostname_add(target.hostname.c_str(), &addr);
         if (err != ESP_OK) {
-            ESP_LOGW(TAG, "mDNS 委托主机名添加返回 %s（可能已存在，继续注册服务）: %s",
+            ESP_LOGW(TAG, "mDNS 委托主机名添加返回 %s（可能已存在，继续）: %s",
                      esp_err_to_name(err), target.hostname.c_str());
         }
 
@@ -489,13 +487,13 @@ void NatAp::register_mdns_proxy(const std::string& mac) {
         }
 
         err = mdns_service_add_for_host(
-            target.hostname.c_str(),   // instance_name
-            "_esphomelib",             // service_type
-            "_tcp",                    // proto
-            target.hostname.c_str(),   // hostname
-            target.port,               // port
-            txt_items.data(),          // txt
-            txt_items.size()           // num_items
+            target.hostname.c_str(),
+            "_esphomelib",
+            "_tcp",
+            target.hostname.c_str(),
+            target.port,
+            txt_items.data(),
+            txt_items.size()
         );
 
         if (err == ESP_OK) {
@@ -520,7 +518,6 @@ void NatAp::unregister_mdns_proxy(const std::string& mac) {
 }
 
 void NatAp::re_register_all_mdns_proxies() {
-    // 先移除所有旧的委托主机名和服务
     for (auto& target : mdns_proxy_targets_) {
         if (target.active) {
             mdns_delegate_hostname_remove(target.hostname.c_str());
