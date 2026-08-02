@@ -202,10 +202,9 @@ void NatAp::enable_napt() {
 void NatAp::enable_bridge_mode() {
     ESP_LOGI(TAG, "启用桥接模式 - 全协议 IP 转发（ICMP/TCP/UDP）");
 #if CONFIG_LWIP_IP_FORWARD
-    ip_forward_enable(1);
-    ESP_LOGI(TAG, "ip_forward_enable(1) 已调用");
+    ESP_LOGI(TAG, "CONFIG_LWIP_IP_FORWARD 已启用，ICMP 等转发由 lwIP 内核处理");
 #else
-    ESP_LOGW(TAG, "CONFIG_LWIP_IP_FORWARD 未启用，桥接退化为仅 NAPT(TCP/UDP)");
+    ESP_LOGW(TAG, "CONFIG_LWIP_IP_FORWARD 未启用，仅 NAPT(TCP/UDP) 转发；如需 ICMP 请在 sdkconfig_options 添加 CONFIG_LWIP_IP_FORWARD: y");
 #endif
 }
 
